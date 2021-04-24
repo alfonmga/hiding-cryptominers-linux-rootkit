@@ -2,7 +2,13 @@
 
 Related post: https://alfon.io/posts/hiding-cryptominers-linux
 
-## Rootkit installation and usage
+## Features
+
+- Hide process
+- Hide process CPU usage
+- Hide files that his filename starts with the [MAGIC_PREFIX](https://github.com/alfonmga/hiding-cryptominers-linux-rootkit/blob/master/main.h#L8)
+
+## Rootkit installation
 
 ### Build
 
