@@ -7,7 +7,7 @@ Related post: https://alfon.io/posts/hiding-cryptominers-linux
 ### Build
 
 ```shell
-> git clone https://github.com/alfonmga/hiding-cryptominers-linux
+> git clone https://github.com/alfonmga/hiding-cryptominers-linux-rootkit
 > cd hiding-cryptominers-linux/
 > make
 ```
