@@ -1,6 +1,6 @@
 # hiding-cryptominers-linux-rootkit
 
-Related post: https://alfon.io/posts/hiding-cryptominers-linux
+Related post: https://alfon.xyz/posts/hiding-cryptominers-linux
 
 ## Features
 
