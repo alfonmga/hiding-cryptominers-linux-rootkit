@@ -105,11 +105,12 @@ changeInvisibleChildren(pid_t pid)
 		return;
 	list_for_each(list, &task->children)
 	{
-		task = list_entry(list, struct task_struct, sibling);
-		if (task)
+		struct task_struct *child;
+		child = list_entry(list, struct task_struct, sibling);
+		if (child)
 		{
-			task->flags ^= PF_INVISIBLE;
-			changeInvisibleChildren(task->pid);
+			child->flags ^= PF_INVISIBLE;
+			changeInvisibleChildren(child->pid);
 		}
 	}
 	return;
