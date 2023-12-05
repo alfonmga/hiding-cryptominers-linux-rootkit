@@ -1,5 +1,8 @@
 # hiding-cryptominers-linux-rootkit
 
+
+**Notice: This LKM rootkit is unmaintained. Please use [Diamorphine](https://github.com/m0nad/Diamorphine/tree/master) as an alternative.**
+
 Related post: https://alfon.xyz/posts/hiding-cryptominers-linux
 
 ## Features
